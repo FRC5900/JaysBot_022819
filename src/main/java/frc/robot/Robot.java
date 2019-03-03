@@ -4,7 +4,6 @@
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
-
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -35,6 +34,8 @@ public class Robot extends TimedRobot
 
   private static final int kJoystickPort = 0;
   private Joystick m_joystick;
+  private Double Robot_MaxSpeed = 0.50; 
+  private Double Robot_MaxTurnSpeed = 0.35; 
 
 
   /**
@@ -44,13 +45,18 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
+    SmartDashboard.putString("Mode", "Robot Init" );
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
+    RightMotor.configOpenloopRamp(2);
+    LeftMotor.configOpenloopRamp(2);
+
     RightMotor.set(ControlMode.PercentOutput, 0);
     LeftMotor.set(ControlMode.PercentOutput, 0);
     m_joystick = new Joystick(kJoystickPort);
   }
+
 
   /**
    * This function is called every robot packet, no matter the mode. Use
@@ -66,6 +72,7 @@ public class Robot extends TimedRobot
 
   }
 
+
   /**
    * This autonomous (along with the chooser code above) shows how to select
    * between different autonomous modes using the dashboard. The sendable
@@ -80,10 +87,12 @@ public class Robot extends TimedRobot
   @Override
   public void autonomousInit() 
   {
+    SmartDashboard.putString("Mode", "Autonomous Init" );
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
   }
+
 
   /**
    * This function is called periodically during autonomous.
@@ -107,8 +116,8 @@ public class Robot extends TimedRobot
   @Override
   public void teleopInit() 
   {
+    SmartDashboard.putString("Mode", "TeleOp Init" );
     super.teleopInit();
-
   }
 
 
@@ -124,12 +133,37 @@ public class Robot extends TimedRobot
 
     forward = Deadband(forward);
     turn = Deadband(turn);
-
+     
+    //restricting forward speed to robot max
+    if (forward > Robot_MaxSpeed )
+      forward = Robot_MaxSpeed;
+    else 
+    {
+      if (forward < -Robot_MaxSpeed)
+        forward = -Robot_MaxSpeed;
+    }     
+    
+    //restricting turn speed to robot max
+    if (turn > Robot_MaxTurnSpeed )
+      turn = Robot_MaxTurnSpeed;
+    else
+    {
+      if (turn < -Robot_MaxTurnSpeed)
+        turn = -Robot_MaxTurnSpeed;
+    }     
+         
     /* Arcade Drive using PercentOutput along with Arbitrary Feed Forward supplied by turn */
     RightMotor.set(ControlMode.PercentOutput, forward,  DemandType.ArbitraryFeedForward, +turn);
     LeftMotor.set(ControlMode.PercentOutput, forward, DemandType.ArbitraryFeedForward, -turn);
+    
+  }
 
 
+  @Override
+  public void testInit() 
+  {
+    SmartDashboard.putString("Mode", "Test Init" );
+    super.testInit();
   }
 
 
@@ -145,16 +179,13 @@ public class Robot extends TimedRobot
 
   /** Deadband 8 percent, used on the gamepad */
   double Deadband(double value) 
-  {
-    /* Upper deadband */
-    if (value >= +0.08) 
+  {   
+    if (value >= +0.1)  // Upper Deadband 
       return value;
       
-    /* Lower deadband */
-    if (value <= -0.08)
+    if (value <= -0.1)  // Lower Deadband
       return value;
-      
-    /* Outside deadband */
-    return 0;
+   
+    return 0;           // Outside Deadband
   }
 }
