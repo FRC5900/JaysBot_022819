@@ -16,6 +16,9 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import edu.wpi.first.wpilibj.Joystick;
 
+import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.cameraserver.CameraServer;
+
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the TimedRobot
@@ -34,9 +37,12 @@ public class Robot extends TimedRobot
 
   private static final int kJoystickPort = 0;
   private Joystick m_joystick;
-  private Double Robot_MaxSpeed = 0.50; 
-  private Double Robot_MaxTurnSpeed = 0.35; 
-
+  private Double Robot_MaxSpeed = 0.45; 
+  private Double Robot_MaxTurnSpeed = 0.45;
+  AnalogInput TankPressure = new AnalogInput(0);
+  
+  double PressureVolts;
+  
 
   /**
    * This function is run when the robot is first started up and should be
@@ -55,6 +61,11 @@ public class Robot extends TimedRobot
     RightMotor.set(ControlMode.PercentOutput, 0);
     LeftMotor.set(ControlMode.PercentOutput, 0);
     m_joystick = new Joystick(kJoystickPort);
+
+    CameraServer.getInstance().startAutomaticCapture();
+  
+    
+  
   }
 
 
@@ -128,8 +139,10 @@ public class Robot extends TimedRobot
   public void teleopPeriodic() 
   {
     /* Gamepad processing */
-    double forward = -1 * m_joystick.getY();
-    double turn = m_joystick.getX();
+   // double forward = -1 * m_joystick.getY();
+   // double turn = m_joystick.getX();
+    double forward = -1 * m_joystick.getRawAxis(5);
+    double turn = m_joystick.getRawAxis(4);
 
     forward = Deadband(forward);
     turn = Deadband(turn);
@@ -156,6 +169,8 @@ public class Robot extends TimedRobot
     RightMotor.set(ControlMode.PercentOutput, forward,  DemandType.ArbitraryFeedForward, +turn);
     LeftMotor.set(ControlMode.PercentOutput, forward, DemandType.ArbitraryFeedForward, -turn);
     
+    PressureVolts = TankPressure.getVoltage();
+    SmartDashboard.putNumber("PressureVolts", PressureVolts);
   }
 
 
