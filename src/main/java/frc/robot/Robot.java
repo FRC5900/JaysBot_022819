@@ -163,23 +163,10 @@ public class Robot extends TimedRobot
     if( m_joystick.getRawButton(1))
       RobotActualSpeed = ROBOT_MAX_SPEED;
     else
-      RobotActualSpeed = ROBOT_NORMAL_SPEED;
-     
-    //restricting forward speed to robot max
-    if (forward > ROBOT_MAX_SPEED )
-      forward = ROBOT_MAX_SPEED;
-    else if (forward < -ROBOT_MAX_SPEED)
-      forward = -ROBOT_MAX_SPEED;
-    
+      RobotActualSpeed = ROBOT_NORMAL_SPEED; 
     
     forward = forward * RobotActualSpeed;
 
-    //restricting turn speed to robot max
-    if (turn > ROBOT_MAX_TURNSPEED )
-      turn = ROBOT_MAX_TURNSPEED;
-    else if (turn < -ROBOT_MAX_TURNSPEED)
-      turn = -ROBOT_MAX_TURNSPEED; 
-         
     turn = turn * RobotActualSpeed;
 
     /* Arcade Drive using PercentOutput along with Arbitrary Feed Forward supplied by turn */
@@ -195,7 +182,8 @@ public class Robot extends TimedRobot
   public void testInit() 
   {
     SmartDashboard.putString("Mode", "Test Init" );
-    super.testInit();
+    super.testInit();RightMotor.set(ControlMode.PercentOutput, 0.0,  DemandType.ArbitraryFeedForward, 0.0);
+    LeftMotor.set(ControlMode.PercentOutput, 0.0, DemandType.ArbitraryFeedForward, 0.0);
   }
 
 
@@ -205,6 +193,13 @@ public class Robot extends TimedRobot
   @Override
   public void testPeriodic() 
   {
+    
+    if( m_joystick.getRawButton(1))
+    {
+      if( sobj.busy() == false )
+        sobj.Start_Move(true, 0.5, 50);
+    }
+
     sobj.scurve_move();
 
   }
