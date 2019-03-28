@@ -37,12 +37,20 @@ public class Robot extends TimedRobot
 
   private static final int kJoystickPort = 0;
   private Joystick m_joystick;
-  private Double Robot_MaxSpeed = 0.45; 
-  private Double Robot_MaxTurnSpeed = 0.45;
+    final double ROBOT_MAX_SPEED = 1.0;
+  final double ROBOT_NORMAL_SPEED = 0.7;
+  final double ROBOT_MAX_TURNSPEED = 0.45;  
+  double RobotActualSpeed;
+
   AnalogInput TankPressure = new AnalogInput(0);
+
+  final int CountDown = 150 * 50;        // convert seconds to 20msec increments        
+  final int TargetCountDown = 40 * 50;   // signal driver when countdown is 40 seconds.
+  int countdown_counter;
+  boolean climb_now = false;
   
   double PressureVolts;
-  
+  Scurve sobj = new Scurve(RightMotor, LeftMotor);
 
   /**
    * This function is run when the robot is first started up and should be
@@ -64,8 +72,6 @@ public class Robot extends TimedRobot
 
     CameraServer.getInstance().startAutomaticCapture();
   
-    
-  
   }
 
 
@@ -80,7 +86,13 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
+     if( countdown_counter > 0 )
+       countdown_counter--;
 
+     if( countdown_counter < TargetCountDown )
+       climb_now = true;
+     else
+       climb_now = false;
   }
 
 
@@ -102,6 +114,7 @@ public class Robot extends TimedRobot
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
+    countdown_counter = CountDown;
   }
 
 
@@ -146,25 +159,29 @@ public class Robot extends TimedRobot
 
     forward = Deadband(forward);
     turn = Deadband(turn);
+
+    if( m_joystick.getRawButton(1))
+      RobotActualSpeed = ROBOT_MAX_SPEED;
+    else
+      RobotActualSpeed = ROBOT_NORMAL_SPEED;
      
     //restricting forward speed to robot max
-    if (forward > Robot_MaxSpeed )
-      forward = Robot_MaxSpeed;
-    else 
-    {
-      if (forward < -Robot_MaxSpeed)
-        forward = -Robot_MaxSpeed;
-    }     
+    if (forward > ROBOT_MAX_SPEED )
+      forward = ROBOT_MAX_SPEED;
+    else if (forward < -ROBOT_MAX_SPEED)
+      forward = -ROBOT_MAX_SPEED;
     
+    
+    forward = forward * RobotActualSpeed;
+
     //restricting turn speed to robot max
-    if (turn > Robot_MaxTurnSpeed )
-      turn = Robot_MaxTurnSpeed;
-    else
-    {
-      if (turn < -Robot_MaxTurnSpeed)
-        turn = -Robot_MaxTurnSpeed;
-    }     
+    if (turn > ROBOT_MAX_TURNSPEED )
+      turn = ROBOT_MAX_TURNSPEED;
+    else if (turn < -ROBOT_MAX_TURNSPEED)
+      turn = -ROBOT_MAX_TURNSPEED; 
          
+    turn = turn * RobotActualSpeed;
+
     /* Arcade Drive using PercentOutput along with Arbitrary Feed Forward supplied by turn */
     RightMotor.set(ControlMode.PercentOutput, forward,  DemandType.ArbitraryFeedForward, +turn);
     LeftMotor.set(ControlMode.PercentOutput, forward, DemandType.ArbitraryFeedForward, -turn);
@@ -188,6 +205,7 @@ public class Robot extends TimedRobot
   @Override
   public void testPeriodic() 
   {
+    sobj.scurve_move();
 
   }
 
