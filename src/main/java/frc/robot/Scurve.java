@@ -67,14 +67,17 @@ public class Scurve
      LeftMotor = lmotor;
   }
 
-  public void Start_Move( boolean fwd, double target_speed, int move_time )
+
+  public void Start_Move( boolean direction, double target_speed, int move_time )
   {
     acc_dec_index = 0;
-    travel_forward = fwd;
+    travel_forward = direction;                // set to true for FWD, false for REV
     max_speed = target_speed;
-    move_time_target_count = move_time;
+    move_time_target_count = move_time;        // how many seconds for move after accel and decel
     scurve_move_state = Controlled_Move.accel_to_speed;  
+    System.out.println( "accel_to_speed " );
   }
+
 
   public boolean busy()
   {
@@ -85,7 +88,8 @@ public class Scurve
   }
 
   /*
-    just move straight
+    scurve_move - moves forward or backward based on direction set.  
+                              
   */
   public void scurve_move( )
   {
@@ -110,6 +114,7 @@ public class Scurve
         {
           scurve_move_state = Controlled_Move.move_distance;
           scurve_time_counter = 0;
+          System.out.println( "move_distance" );
         }      
         break;
 
@@ -128,14 +133,14 @@ public class Scurve
         {
           scurve_move_state = Controlled_Move.decel_to_stop;
           acc_dec_index++;
+          System.out.println( "decel_to_stop" );          
         }
         break;
 
       case decel_to_stop:  // Decelerate to stop
         turn_speed = 0;
         forward_speed = acc_dec_array[acc_dec_index];
-        System.out.println( "speed " + forward_speed );
-
+        
         if( travel_forward == false )
           forward_speed = -forward_speed;
       
@@ -150,6 +155,7 @@ public class Scurve
           scurve_time_counter = 0;
           RightMotor.set(ControlMode.PercentOutput, 0.0,  DemandType.ArbitraryFeedForward, 0.0);
           LeftMotor.set(ControlMode.PercentOutput, 0.0, DemandType.ArbitraryFeedForward, 0.0);
+          System.out.println( "move complete " );
         }      
         break;
 
@@ -157,9 +163,11 @@ public class Scurve
         scurve_move_state = Controlled_Move.wait_for_cmd;
         RightMotor.set(ControlMode.PercentOutput, 0.0,  DemandType.ArbitraryFeedForward, 0.0);
         LeftMotor.set(ControlMode.PercentOutput, 0.0, DemandType.ArbitraryFeedForward, 0.0);
+        System.out.println( "lost, so reset state 0" );
         break;
     }
     System.out.println( "speed " + forward_speed );
+
   }
     
 }
