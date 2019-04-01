@@ -6,9 +6,8 @@
 /*----------------------------------------------------------------------------*/
 package frc.robot;
 
-import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.smartdashboard.*;
+import edu.wpi.first.wpilibj.*;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.DemandType;
@@ -34,22 +33,25 @@ public class Robot extends TimedRobot
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   TalonSRX RightMotor = new TalonSRX(0);
   VictorSPX LeftMotor = new VictorSPX(1);
+  Timer tclock = new Timer();
 
   private static final int kJoystickPort = 0;
   private Joystick m_joystick;
-    final double ROBOT_MAX_SPEED = 1.0;
+  final double ROBOT_MAX_SPEED = 1.0;
   final double ROBOT_NORMAL_SPEED = 0.7;
   final double ROBOT_MAX_TURNSPEED = 0.45;  
   double RobotActualSpeed;
 
   AnalogInput TankPressure = new AnalogInput(0);
 
-  final int CountDown = 150 * 50;        // convert seconds to 20msec increments        
-  final int TargetCountDown = 40 * 50;   // signal driver when countdown is 40 seconds.
+ 
+  final double TargetCountDown = 90.0;   // signal driver when countdown is 40 seconds.
   int countdown_counter;
   boolean climb_now = false;
+  boolean pressure_ok = false;
   
   double PressureVolts;
+  final double PressureMax = 0.252;
   Scurve sobj = new Scurve(RightMotor, LeftMotor);
 
   /**
@@ -86,13 +88,35 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
-     if( countdown_counter > 0 )
-       countdown_counter--;
+    if( climb_now == false )
+    {
+      if( tclock.get() > TargetCountDown )
+      {
+        climb_now = true;
+        SmartDashboard.putBoolean("Climb", climb_now);
+      }
+      else
+      {
+        climb_now = false;
+        SmartDashboard.putBoolean("Climb", climb_now);
+      }
+  //    SmartDashboard.putNumber("target", TargetCountDown);
+  //    SmartDashboard.putNumber("tclock ", tclock.get());
 
-     if( countdown_counter < TargetCountDown )
-       climb_now = true;
-     else
-       climb_now = false;
+      PressureVolts = TankPressure.getVoltage();
+      SmartDashboard.putNumber("PressureVolts", PressureVolts);
+     
+      if( PressureVolts > PressureMax)
+        pressure_ok = true;
+      else
+        pressure_ok = false;
+      
+      SmartDashboard.putBoolean("Pressure", pressure_ok);
+
+
+    }
+    
+    
   }
 
 
@@ -114,7 +138,9 @@ public class Robot extends TimedRobot
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
-    countdown_counter = CountDown;
+    climb_now = false;
+    tclock.reset();
+    tclock.start();
   }
 
 
@@ -154,13 +180,13 @@ public class Robot extends TimedRobot
     /* Gamepad processing */
    // double forward = -1 * m_joystick.getY();
    // double turn = m_joystick.getX();
-    double forward = -1 * m_joystick.getRawAxis(5);
+    double forward =  m_joystick.getRawAxis(5);
     double turn = m_joystick.getRawAxis(4);
 
     forward = Deadband(forward);
     turn = Deadband(turn);
 
-    if( m_joystick.getRawButton(1))
+    if( m_joystick.getRawButton(5))
       RobotActualSpeed = ROBOT_MAX_SPEED;
     else
       RobotActualSpeed = ROBOT_NORMAL_SPEED; 
@@ -170,11 +196,26 @@ public class Robot extends TimedRobot
     turn = turn * RobotActualSpeed;
 
     /* Arcade Drive using PercentOutput along with Arbitrary Feed Forward supplied by turn */
-    RightMotor.set(ControlMode.PercentOutput, forward,  DemandType.ArbitraryFeedForward, +turn);
-    LeftMotor.set(ControlMode.PercentOutput, forward, DemandType.ArbitraryFeedForward, -turn);
-    
-    PressureVolts = TankPressure.getVoltage();
-    SmartDashboard.putNumber("PressureVolts", PressureVolts);
+    if( sobj.busy() == false )
+    {
+      RightMotor.set(ControlMode.PercentOutput, forward,  DemandType.ArbitraryFeedForward, +turn);
+      LeftMotor.set(ControlMode.PercentOutput, forward, DemandType.ArbitraryFeedForward, -turn);
+   
+      if( m_joystick.getRawButton(4))
+      {
+        if( sobj.busy() == false )
+          sobj.Start_Move(true, 1.0, 25);
+      }
+
+      if( m_joystick.getRawButton(1))
+      {
+        if( sobj.busy() == false )
+          sobj.Start_Move(false, 1.0, 25);
+      }
+    }
+
+    sobj.scurve_move();
+   
   }
 
 
@@ -182,7 +223,8 @@ public class Robot extends TimedRobot
   public void testInit() 
   {
     SmartDashboard.putString("Mode", "Test Init" );
-    super.testInit();RightMotor.set(ControlMode.PercentOutput, 0.0,  DemandType.ArbitraryFeedForward, 0.0);
+    super.testInit();
+    RightMotor.set(ControlMode.PercentOutput, 0.0,  DemandType.ArbitraryFeedForward, 0.0);
     LeftMotor.set(ControlMode.PercentOutput, 0.0, DemandType.ArbitraryFeedForward, 0.0);
   }
 
@@ -194,10 +236,16 @@ public class Robot extends TimedRobot
   public void testPeriodic() 
   {
     
+    if( m_joystick.getRawButton(4))
+    {
+      if( sobj.busy() == false )
+        sobj.Start_Move(true, 1.0, 25);
+    }
+
     if( m_joystick.getRawButton(1))
     {
       if( sobj.busy() == false )
-        sobj.Start_Move(true, 0.5, 50);
+        sobj.Start_Move(false, 1.0, 25);
     }
 
     sobj.scurve_move();
