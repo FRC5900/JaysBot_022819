@@ -19,9 +19,6 @@
 package frc.robot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
-import javax.lang.model.util.ElementScanner6;
-
 import edu.wpi.first.wpilibj.AnalogInput;
 
 public class SystemStatus 
