@@ -53,6 +53,7 @@ public class Robot extends TimedRobot
   double PressureVolts;
   final double PressureMax = 0.252;
   Scurve sobj = new Scurve(RightMotor, LeftMotor);
+  SystemStatus sysstat = new SystemStatus();     // This object check game clock and pressure level
 
   /**
    * This function is run when the robot is first started up and should be
@@ -73,7 +74,7 @@ public class Robot extends TimedRobot
     m_joystick = new Joystick(kJoystickPort);
 
     CameraServer.getInstance().startAutomaticCapture();
-  
+    sysstat.StartPressureCheck();
   }
 
 
@@ -88,35 +89,7 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
-    if( climb_now == false )
-    {
-      if( tclock.get() > TargetCountDown )
-      {
-        climb_now = true;
-        SmartDashboard.putBoolean("Climb", climb_now);
-      }
-      else
-      {
-        climb_now = false;
-        SmartDashboard.putBoolean("Climb", climb_now);
-      }
-  //    SmartDashboard.putNumber("target", TargetCountDown);
-  //    SmartDashboard.putNumber("tclock ", tclock.get());
-
-      PressureVolts = TankPressure.getVoltage();
-      SmartDashboard.putNumber("PressureVolts", PressureVolts);
-     
-      if( PressureVolts > PressureMax)
-        pressure_ok = true;
-      else
-        pressure_ok = false;
-      
-      SmartDashboard.putBoolean("Pressure", pressure_ok);
-
-
-    }
-    
-    
+    sysstat.Check_System_Status(); 
   }
 
 
@@ -138,9 +111,7 @@ public class Robot extends TimedRobot
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
-    climb_now = false;
-    tclock.reset();
-    tclock.start();
+    sysstat.StartGameClock();
   }
 
 
