@@ -36,7 +36,7 @@ public class SystemStatus
 
   public SystemStatus()
   {
-   
+    System.out.println( "SystemStatus Constructor");
   }
 
   public void StartPressureCheck()
@@ -102,7 +102,8 @@ public class SystemStatus
         break;
 
       case initialize:
-        gclock.reset();      
+        gclock.reset();     
+        gclock.start(); 
         climb_now = false;
         SmartDashboard.putBoolean("Climb", climb_now);
         game_state = SystemStates.wait_for_true;
@@ -124,5 +125,4 @@ public class SystemStatus
         break;
     }
   }
-
 }
