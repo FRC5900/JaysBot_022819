@@ -89,7 +89,7 @@ public class Robot extends TimedRobot
   @Override
   public void robotPeriodic() 
   {
-    sysstat.Check_System_Status(); 
+    sysstat.Check_System_Status();   // This object check game clock and pressure level
   }
 
 
@@ -163,7 +163,6 @@ public class Robot extends TimedRobot
       RobotActualSpeed = ROBOT_NORMAL_SPEED; 
     
     forward = forward * RobotActualSpeed;
-
     turn = turn * RobotActualSpeed;
 
     /* Arcade Drive using PercentOutput along with Arbitrary Feed Forward supplied by turn */
@@ -185,7 +184,7 @@ public class Robot extends TimedRobot
       }
     }
 
-    sobj.scurve_move();
+    sobj.scurve_move();        // Process any auto commands for scurve profile
    
   }
 
