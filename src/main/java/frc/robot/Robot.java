@@ -14,8 +14,6 @@ import com.ctre.phoenix.motorcontrol.DemandType;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import edu.wpi.first.wpilibj.Joystick;
-
-import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.cameraserver.CameraServer;
 
 /**
@@ -37,24 +35,24 @@ public class Robot extends TimedRobot
 
   private static final int kJoystickPort = 0;
   private Joystick m_joystick;
-  final double ROBOT_MAX_SPEED = 1.0;
+  double ROBOT_MAX_SPEED = 1.0;
   final double ROBOT_NORMAL_SPEED = 0.7;
-  final double ROBOT_MAX_TURNSPEED = 0.45;  
+  double ROBOT_MAX_TURNSPEED = 0.60;  
+  final double ROBOT_NORMAL_TURNSPEED = 0.35;
   double RobotActualSpeed;
+  double RobotActualTurnSpeed;
 
-  AnalogInput TankPressure = new AnalogInput(0);
+  Preferences prefs;
 
- 
+   
   final double TargetCountDown = 90.0;   // signal driver when countdown is 40 seconds.
   int countdown_counter;
   boolean climb_now = false;
   boolean pressure_ok = false;
   
-  double PressureVolts;
-  final double PressureMax = 0.252;
   Scurve sobj = new Scurve(RightMotor, LeftMotor);
   SystemStatus sysstat = new SystemStatus();     // This object check game clock and pressure level
-
+  MastControls mast_obj; 
   /**
    * This function is run when the robot is first started up and should be
    * used for any initialization code.
@@ -62,6 +60,8 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit() 
   {
+    GetPreferences();
+    
     SmartDashboard.putString("Mode", "Robot Init" );
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
@@ -72,12 +72,25 @@ public class Robot extends TimedRobot
     RightMotor.set(ControlMode.PercentOutput, 0);
     LeftMotor.set(ControlMode.PercentOutput, 0);
     m_joystick = new Joystick(kJoystickPort);
+    mast_obj = new MastControls(m_joystick);
 
     CameraServer.getInstance().startAutomaticCapture();
     sysstat.StartPressureCheck();
   }
 
 
+ 
+  public void GetPreferences() 
+  {
+    prefs = Preferences.getInstance();
+		ROBOT_MAX_SPEED = prefs.getDouble("MaxDriveSpeed", 1.0);
+		ROBOT_MAX_TURNSPEED = prefs.getDouble("MaxTurnSpeed", 0.8);
+	
+    System.out.println("Max Drive Speed: " + ROBOT_MAX_SPEED);
+    System.out.println("Max Turn Speed: " + ROBOT_MAX_TURNSPEED);    
+  }
+
+  
   /**
    * This function is called every robot packet, no matter the mode. Use
    * this for items like diagnostics that you want ran during disabled,
@@ -139,6 +152,7 @@ public class Robot extends TimedRobot
   {
     SmartDashboard.putString("Mode", "TeleOp Init" );
     super.teleopInit();
+    GetPreferences();
   }
 
 
@@ -158,34 +172,35 @@ public class Robot extends TimedRobot
     turn = Deadband(turn);
 
     if( m_joystick.getRawButton(5))
+    {
       RobotActualSpeed = ROBOT_MAX_SPEED;
+      RobotActualTurnSpeed = ROBOT_MAX_TURNSPEED;
+    }
     else
+    {
       RobotActualSpeed = ROBOT_NORMAL_SPEED; 
-    
+      RobotActualTurnSpeed = ROBOT_NORMAL_TURNSPEED;
+    }
+  
     forward = forward * RobotActualSpeed;
-    turn = turn * RobotActualSpeed;
+    turn = turn * RobotActualTurnSpeed;
 
     /* Arcade Drive using PercentOutput along with Arbitrary Feed Forward supplied by turn */
     if( sobj.busy() == false )
     {
       RightMotor.set(ControlMode.PercentOutput, forward,  DemandType.ArbitraryFeedForward, +turn);
       LeftMotor.set(ControlMode.PercentOutput, forward, DemandType.ArbitraryFeedForward, -turn);
-   
-      if( m_joystick.getRawButton(4))
-      {
-        if( sobj.busy() == false )
-          sobj.Start_Move(true, 1.0, 25);
-      }
+      SmartDashboard.putNumber("Speed Profile", forward ); 
 
-      if( m_joystick.getRawButton(1))
-      {
-        if( sobj.busy() == false )
-          sobj.Start_Move(false, 1.0, 25);
-      }
+      if( m_joystick.getRawButton(4) && sobj.busy() == false )
+        sobj.Start_Move(true, ROBOT_MAX_SPEED, 25);
+      
+
+      if( m_joystick.getRawButton(1) && sobj.busy() == false )
+        sobj.Start_Move(false, ROBOT_MAX_SPEED, 25);
     }
-
     sobj.scurve_move();        // Process any auto commands for scurve profile
-   
+    mast_obj.Mast_Controls();
   }
 
 

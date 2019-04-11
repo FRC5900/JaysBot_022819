@@ -12,6 +12,8 @@ import com.ctre.phoenix.motorcontrol.DemandType;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 /**
  * Add your docs here.
  */
@@ -106,7 +108,7 @@ public class Scurve
             forward_speed = -forward_speed;
         
         forward_speed = forward_speed * max_speed;
-
+        SmartDashboard.putNumber("Speed Profile", forward_speed );  
         RightMotor.set(ControlMode.PercentOutput, forward_speed,  DemandType.ArbitraryFeedForward, +turn_speed);
         LeftMotor.set(ControlMode.PercentOutput, forward_speed, DemandType.ArbitraryFeedForward, -turn_speed);
 
@@ -115,7 +117,8 @@ public class Scurve
           scurve_move_state = Controlled_Move.move_distance;
           scurve_time_counter = 0;
           System.out.println( "move_distance" );
-        }      
+        }    
+        
         break;
 
       case move_distance:  // Move at target speed for duration 
@@ -126,7 +129,7 @@ public class Scurve
           forward_speed = -forward_speed;
     
         forward_speed = forward_speed * max_speed;
-
+        SmartDashboard.putNumber("Speed Profile", forward_speed );  
         RightMotor.set(ControlMode.PercentOutput, forward_speed,  DemandType.ArbitraryFeedForward, +turn_speed);
         LeftMotor.set(ControlMode.PercentOutput, forward_speed, DemandType.ArbitraryFeedForward, -turn_speed);
         if( scurve_time_counter++ > move_time_target_count )
@@ -135,17 +138,18 @@ public class Scurve
           acc_dec_index++;
           System.out.println( "decel_to_stop" );          
         }
+       
         break;
 
       case decel_to_stop:  // Decelerate to stop
         turn_speed = 0;
         forward_speed = acc_dec_array[acc_dec_index];
         
-        if( travel_forward == false )
+        if( travel_forward == true )
           forward_speed = -forward_speed;
       
         forward_speed = forward_speed * max_speed;
-
+        SmartDashboard.putNumber("Speed Profile", forward_speed );  
         RightMotor.set(ControlMode.PercentOutput, forward_speed,  DemandType.ArbitraryFeedForward, +turn_speed);
         LeftMotor.set(ControlMode.PercentOutput, forward_speed, DemandType.ArbitraryFeedForward, -turn_speed);
 
@@ -156,7 +160,8 @@ public class Scurve
           RightMotor.set(ControlMode.PercentOutput, 0.0,  DemandType.ArbitraryFeedForward, 0.0);
           LeftMotor.set(ControlMode.PercentOutput, 0.0, DemandType.ArbitraryFeedForward, 0.0);
           System.out.println( "move complete " );
-        }      
+        }  
+          
         break;
 
       default:
@@ -166,8 +171,8 @@ public class Scurve
         System.out.println( "lost, so reset state 0" );
         break;
     }
-    System.out.println( "speed " + forward_speed );
-
+    //System.out.println( "speed " + forward_speed );
+  
   }
     
 }

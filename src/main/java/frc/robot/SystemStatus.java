@@ -77,7 +77,7 @@ public class SystemStatus
 
       case initialize:        
         pressure_ok = false;
-        SmartDashboard.putBoolean("Pressure", pressure_ok);
+        SmartDashboard.putBoolean("PressureOK", pressure_ok);
         pressure_state = SystemStates.wait_for_true;
         PressureDebounce = 0;
         break;
