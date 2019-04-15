@@ -9,9 +9,6 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
-import javax.lang.model.util.ElementScanner6;
-
 import edu.wpi.first.wpilibj.Encoder;
 
 
@@ -101,7 +98,7 @@ public class MastControls
         break;
 
       case up_to_Level1:
-        if (Current_Mast_Position > Level1_TargetCount) 
+        if (Current_Mast_Position >= Level1_TargetCount) 
         {
           mast_state = Mast_States.at_Level1;
           SmartDashboard.putString("Mast", "At Level1");
