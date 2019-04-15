@@ -10,6 +10,10 @@ package frc.robot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import javax.lang.model.util.ElementScanner6;
+
+import edu.wpi.first.wpilibj.Encoder;
+
 
 enum Mast_States
 {
@@ -30,6 +34,12 @@ public class MastControls
 {
   Joystick jstick;
   Mast_States mast_state;
+  Encoder enc = new Encoder(0, 1, true, Encoder.EncodingType.k1X);
+  final int Home_TargetCount = 0;
+  final int Level1_TargetCount = 2000;
+  final int Level2_TargetCount = 4000;
+  final int Level3_TargetCount = 6000;
+
 
   public MastControls( Joystick stick )
   {
@@ -37,10 +47,20 @@ public class MastControls
     jstick = stick;
     mast_state = Mast_States.at_home;
     SmartDashboard.putString("Mast", "At Home");
+    enc.setMaxPeriod(.1);
+    enc.setMinRate(10);
+    enc.setDistancePerPulse(1);
+    enc.setReverseDirection(true);
+    enc.setSamplesToAverage(7);
+    enc.reset();
   }
 
   public void Mast_Controls()
   {
+    int Current_Mast_Position;
+
+    Current_Mast_Position = enc.get();
+
     switch (mast_state)
     {
       case wait_for_cmd:
@@ -57,30 +77,61 @@ public class MastControls
           mast_state = Mast_States.up_to_Level1;
           SmartDashboard.putString("Mast", "Up to Level1");
         }
+        else 
+        {
+          // Manual Control of Mast
+        }
         break;
 
       case down_to_home:
-        if (jstick.getRawButton(2) == false)
+        if (Current_Mast_Position <= Home_TargetCount) 
         {
           mast_state = Mast_States.at_home;
           SmartDashboard.putString("Mast", "At Home");
+          // Stop Mast
+        }
+        else if (Current_Mast_Position > Home_TargetCount + 200)
+        {
+          // Move Mast Down faster speed
+        } 
+        else 
+        {
+          // Move Mast Down slower speed
         }
         break;
 
       case up_to_Level1:
-        if (jstick.getRawButton(3) == false)
+        if (Current_Mast_Position > Level1_TargetCount) 
         {
           mast_state = Mast_States.at_Level1;
           SmartDashboard.putString("Mast", "At Level1");
-        }  
+          // Stop Mast
+        }
+        else if (Current_Mast_Position > Level1_TargetCount - 200)
+        {
+          // Move Mast Up slower speed
+        } 
+        else 
+        {
+          // Move Mast Up faster speed
+        }
         break;
 
       case down_to_Level1:
-        if (jstick.getRawButton(2) == false)
+        if (Current_Mast_Position <= Level1_TargetCount) 
         {
           mast_state = Mast_States.at_Level1;
           SmartDashboard.putString("Mast", "At Level1");
-        }  
+          // Stop Mast
+        }
+        else if (Current_Mast_Position > Level1_TargetCount + 200)
+        {
+          // Move Mast Down faster speed
+        } 
+        else 
+        {
+          // Move Mast Down slower speed
+        }
         break;
 
       case at_Level1:
@@ -94,21 +145,43 @@ public class MastControls
           mast_state = Mast_States.down_to_home;
           SmartDashboard.putString("Mast", "Down to Home");
         }
+        else 
+        {
+          // Manual Control of Mast
+        }
         break;
 
       case up_to_Level2:
-        if (jstick.getRawButton(3) == false)       
+        if (Current_Mast_Position > Level2_TargetCount) 
         {
           mast_state = Mast_States.at_Level2;
           SmartDashboard.putString("Mast", "At Level2");
+          // Stop Mast
+        }
+        else if (Current_Mast_Position > Level2_TargetCount - 200)
+        {
+          // Move Mast Up slower speed
+        } 
+        else 
+        {
+          // Move Mast Up faster speed
         }
         break;
 
       case down_to_Level2:
-        if (jstick.getRawButton(2) == false)
+        if (Current_Mast_Position <= Level2_TargetCount) 
         {
           mast_state = Mast_States.at_Level2;
           SmartDashboard.putString("Mast", "At Level2");
+          // Stop Mast
+        }
+        else if (Current_Mast_Position > Level2_TargetCount + 200)
+        {
+          // Move Mast Down faster speed
+        } 
+        else 
+        {
+          // Move Mast Down slower speed
         }
         break;
 
@@ -123,14 +196,27 @@ public class MastControls
           mast_state = Mast_States.down_to_Level1;
           SmartDashboard.putString("Mast", "Down to Level1");
         }
+        else 
+        {
+          // Manual Control of Mast
+        }
         break;
 
       case up_to_Level3:
-        if (jstick.getRawButton(3) == false)
+        if (Current_Mast_Position >= Level3_TargetCount) 
         {
           mast_state = Mast_States.at_Level3;
           SmartDashboard.putString("Mast", "At Level3");
-        }  
+          // Stop Mast
+        }
+        else if (Current_Mast_Position > Level3_TargetCount - 200)
+        {
+          // Move Mast Up slower speed
+        } 
+        else 
+        {
+          // Move Mast Up faster speed
+        }
         break;
       
       case at_Level3:
@@ -139,10 +225,15 @@ public class MastControls
           mast_state = Mast_States.down_to_Level2;
           SmartDashboard.putString("Mast", "Down to Level2");
         }
+        else 
+        {
+          // Manual Control of Mast
+        }
         break;
       
       default:
         mast_state = Mast_States.wait_for_cmd;
+        // Stop Mast
         break;
 
     }
